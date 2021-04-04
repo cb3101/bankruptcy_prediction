@@ -1,0 +1,359 @@
+%
+% File eacl2021.tex
+%
+%% Based on the style files for ACL 2020, which were
+%% Based on the style files for ACL 2018, NAACL 2018/19, which were
+%% Based on the style files for ACL-2015, with some improvements
+%%  taken from the NAACL-2016 style
+%% Based on the style files for ACL-2014, which were, in turn,
+%% based on ACL-2013, ACL-2012, ACL-2011, ACL-2010, ACL-IJCNLP-2009,
+%% EACL-2009, IJCNLP-2008...
+%% Based on the style files for EACL 2006 by 
+%%e.agirre@ehu.es or Sergi.Balari@uab.es
+%% and that of ACL 08 by Joakim Nivre and Noah Smith
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[hyperref]{eacl2021}
+\usepackage{times}
+\usepackage{latexsym}
+\renewcommand{\UrlFont}{\ttfamily\small}
+
+% additional packages
+\usepackage{float} % for floating
+\usepackage{graphicx}% so it makes black blobs
+\graphicspath{ {images/} }
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+
+\newenvironment{narrow}[2]{%
+  \begin{list}{}{%
+    \setlength{\topsep}{0pt}%
+    \setlength{\leftmargin}{#1}%
+    \setlength{\rightmargin}{#2}%
+    \setlength{\listparindent}{\parindent}%
+    \setlength{\itemindent}{\parindent}%
+    \setlength{\parsep}{\parskip}%
+  }%
+  \item[]
+}{\end{list}}
+
+
+% This is not strictly necessary, and may be commented out,
+% but it will improve the layout of the manuscript,
+% and will typically save some space.
+\usepackage{microtype}
+
+\aclfinalcopy % Uncomment this line for the final submission
+%\def\aclpaperid{***} %  Enter the acl Paper ID here
+
+%\setlength\titlebox{5cm}
+% You can expand the titlebox if you need extra space
+% to show all the authors. Please do not make the titlebox
+% smaller than 5cm (the original size); we will check this
+% in the camera-ready version and ask you to change it back.
+
+\newcommand\BibTeX{B\textsc{ib}\TeX}
+
+\title{Bankruptcy Prediction: A Comparative Study on various Missing Value Imputation and Sampling Techniques}
+% \title{Comparative Study on Different Missing Value Imputation and Resampling Techniques for Bankruptcy Prediction}
+
+\author{
+  Chirag Bhatt \\
+  Department of Mathematics \\
+  Indian Institute of Technology, Delhi \\
+  Delhi 110016, India \\
+  \texttt{mt1180750@maths.iitd.ac.in} \\\And
+  Subhalingam D \\
+  Department of Mathematics \\
+  Indian Institute of Technology, Delhi \\
+  Delhi 110016, India \\
+  \texttt{mt1180770@maths.iitd.ac.in} \\}
+
+\date{}
+
+\begin{document}
+\input{partials/const}
+
+\maketitle
+\begin{abstract}
+This project aims towards experimenting with different methods for improving the existing models in the literature used for predicting corporate bankruptcy for Polish companies. More specifically, we aim to get better recall values as the existing models are suffering from poor recall. To tackle class imbalance, we use sampling techniques like SMOTE, RUS, SMOTE-ENN, and to impute missing values, we use Simple Imputer, MissForest, KNN. The performance of the models improved with SMOTE and simple imputation.\\
+
+Keywords—Bankruptcy, Classification, SMOTE, 
+Feature Selection, Imputation, Sampling
+\end{abstract}
+
+
+\section{Introduction}
+\label{sec::intro}
+Bankruptcy is a legal proceeding carried out to allow businesses unable to make payment to its creditors get freedom from their debts, while providing creditors an opportunity for repayment based on the business's assets. Only in USA more than 21 thousand businesses filed for bankruptcy in year 2020 [\href{https://www.investopedia.com/terms/b/bankruptcy.asp}{Investopedia}].  When a company becomes bankrupt and goes for into liquidation, stock shares becomes practically worthless. The common shareholders may, at best, get a portion of their value back but most often they do not get anything at all. Some well-known examples of Indian companies that went bankrupt include \textit{Yes Bank}, \textit{Jet Airways} and \textit{Videocon}.
+
+Thus, knowing the financial health of a firm and predicting whether it has possibility of getting bankrupt in near future is of prime importance for the investors and the creditors.
+
+%%% The Corporate Bankruptcy prediction project aims to predict the possibility of a firm getting bankrupt in next 1 to 5 years given 64 financial measures of the firm.   
+
+
+\subsection{Problem Statement}
+The Corporate Bankruptcy prediction project aims to predict the possibility of a firm getting bankrupt in thr next $1$ to $5$ years, given the financial measures of the firm, like \textit{net profit/sales}, \textit{total assets/total liabilities for a financial year}.
+% Given the economic measures of a firm, like \textit{net profit/sales}, \textit{total assets/total liabilities for a financial year}, the aim is to predict whether the firm will go bankrupt in the next $1$, $2$, $3$, $4$ or $5$ year(s) or not.
+%%% Given $64$ economic measures of a firm, like \textit{net profit/sales}, \textit{total assets/total liabilities for a financial year} (as described in Table \ref{tab::dataset_attr_desc}), we aim to predict whether the firm will go bankrupt in the next $1$, $2$, $3$, $4$ or $5$ year(s) or not.
+
+\subsection{Past Works}
+\newcite{zikeba2016ensemble} prepared the Polish companies bankruptcy dataset (discussed further in Section \ref{sec::dataset}) and proposed an ensemble Boosted Decision Tree model with synthetic feature generation for the prediction task.
+\newcite{improving20quynh} proposed a new approach to take best ensemble models as base models and to make predictions based on "\textit{fair voting}", and a procedure to handle missing values using Random Forest algorithm.
+\newcite{ren_2020} searched for common financial indicators of bankruptcy by comparing diverse financial markets in China and Poland.
+
+
+\subsection{Motivation}
+\label{sec::motivation}
+A preliminary data analysis showed a very high class imbalance and presence of missing values in the data. The class imbalance is natural as the number of companies that actually get bankrupt is very less.
+\newcite{zikeba2016ensemble} used accuracy as the metric to evaluate their models -- however, given such a high class imbalance, a model that is completely biased towards '\textit{not bankrupt}' would also have an accuracy of about 95\%.
+\newcite{improving20quynh} proposed an approach to impute missing values using Random Forests for the same task, which motivated us to explore more techniques in this area.
+\newcite{ren_2020} showed that the best achieved recall value (without sampling) was 56\% for the fifth year, which showed the performance of the model towards '\textit{bankrupt}' label.
+ 
+\subsection{Our Contributions}
+We explored and surveyed various sampling techniques and missing values imputation techniques in the literature for the bankruptcy prediction task. In particular, for sampling, we experimented on: 1. Synthetic Minority Oversampling Technique (SMOTE) \cite{Chawla_2002}; 2. Random Under-Sampling of majority class (RUS); and 3. combined over-sampling and under-sampling using SMOTE and Edited Nearest Neighbours (SMOTE-ENN) \cite{Batista2004ASO}. For missing values imputation, we experimented on: 1. Simple Imputation (replacing the missing values by mean); 2. MissForest (algorithm that operates on Random Forest) \cite{Stekhoven_2011}; and 3. KNN-based imputation \cite{mani2003knn}, We performed a comparative study on the performance of the models by considering different combinations of the techniques listed above, aiming at improving the performance of prediction on '\textit{bankrupt}' class.
+
+\section{Dataset}
+\label{sec::dataset}
+We use the "\textit{Polish companies bankruptcy data Data Set}" available on UCI Machine Learning Repository\footnote{ \url{https://archive.ics.uci.edu/ml/datasets/Polish+companies+bankruptcy+data}} for this project.
+
+\subsection{Description}
+The bankrupt companies were analyzed in the period 2000-2012, while the still operating companies were evaluated from 2007 to 2013. 
+Based on the collected data, five classification cases were distinguished depending on the forecasting period\footnote{It can be observed that the $n^{th}$ year refers to "\textit{bankruptcy status after $\mathit{(5-n)+1}$ years}", and a similar terminology is used throughout in the report}:
+\begin{itemize}
+    \item $\mathbf{1^{st}}$ \textbf{Year}: the data contains financial rates from 1st year of the forecasting period and corresponding class label that indicates bankruptcy status after 5 years
+    \item $\mathbf{2^{nd}}$ \textbf{Year}: the data contains financial rates from 2nd year of the forecasting period and corresponding class label that indicates bankruptcy status after 4 years
+    \item $\mathbf{3^{rd}}$ \textbf{Year}: the data contains financial rates from 3rd year of the forecasting period and corresponding class label that indicates bankruptcy status after 3 years
+    \item $\mathbf{4^{th}}$ \textbf{Year}: the data contains financial rates from 4th year of the forecasting period and corresponding class label that indicates bankruptcy status after 2 years.
+    \item $\mathbf{5^{th}}$ \textbf{Year}: the data contains financial rates from 5th year of the forecasting period and corresponding class label that indicates bankruptcy status after 1 year.
+\end{itemize}
+
+The dataset contains numerical data for $64$ economic measures and a class label $\{0,1\}$ signifying whether the firm gets bankrupt in the forecasting period for each corporate company. The list of economic measures available is given in Table \ref{tab::dataset_attr_desc} 
+
+\input{partials/tab__dataset_attr_desc}
+
+\section{Exploratory Data Analysis}
+\subsection{Imbalanced Data}
+\label{sec::imbalance}
+We found that the distribution of firms belonging to different classes in the given data set is highly skewed, with 95.1\% companies belonging to class 0 (\textit{not getting bankrupt}) and 4.9\% belonging to class 1 (\textit{getting bankrupt}). The distribution between classes for each year is listed in Table \ref{tab::dataset_class_distr}.
+
+\input{partials/tab__dataset_class_distr}
+\subsection{Missing Values}
+\label{sec::missing_vals}
+We observed that 53\% examples in the data set contains at least one attribute missing and overall 1.48\% of total values are missing. Notably, \textit{Attr37} had the highest percent of missing values (43\%) for all 5 years. Following that, \textit{Attr21} has the second highest percentage of missing values for year 1 and 2 (27.8\%). Other attributes have missing values less than 7\%.
+The top 3 attributes with highest percentage of missing values for each year is tabulated in Table \ref{tab::attr_missing}.
+
+\input{partials/tab__attr_missing}
+
+\subsection{Feature Selection}
+Feature Selection is performed to find out the attributes which are more significant in predicting the class. We used \texttt{sklearn.feature$\_$selection} library which outputs a score (between 0-1) for each attribute signifying the relative importance of that attribute. The score sums up to 1. We performed feature selection for each year and averaged over them to find the top 10 most important attributes (Table \ref{tab::feature_selection}). Notably, we observed that \textit{Attr27} has very high score as compared to its successors, which corresponds to "\textit{profit on operating activities / financial expenses}".
+\input{partials/feature_selection}
+
+
+\subsection{Correlation}
+Pairwise correlation between attributes were computed (Figure 
+\ref{fig::correlation}). For attribute pairs with very high correlation ( $>$ 0.9), attributes having higher percent of missing values are dropped (Section \ref{sec::pipe_preprocessing}).
+Table \ref{tab::highest_correlation} and Table \ref{tab::least_correlation} show top 10 attribute pairs with highest and least correlation respectively.
+\\
+\input{partials/least_correlation}
+\input{partials/highest_correlation}
+\label{sec::correlation}
+
+\section{Methodology}
+\label{sec::methodology}
+%\subsection{Pipeline}
+A schematic of the model pipeline is given in Figure \ref{fig::pipeline} and is discussed in detail in the following subsections.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.75\columnwidth]{Pipeline.png}
+\caption{\label{fig::pipeline} Model Pipeline}
+\end{figure}
+
+\subsection{Pre-processing}
+\label{sec::pipe_preprocessing}
+The following tasks were performed as part of pre-processing:
+\begin{itemize}
+    \item The data was converted into a \texttt{.csv} format so that data analysis and training could be performed with ease.
+    \item The dataset contained duplicate entries. Such entries were dropped.
+    \item \texttt{Attr37} had over 40\% of the values missing and hence, was dropped. (Section \ref{sec::missing_vals}.
+    \item In some cases, a pair of attributes in the dataset were highly correlated with each other (Section \ref{sec::correlation}). In such cases, the attributes with higher number of missing values were dropped. The list of attributes dropped are:
+    \begin{quote}
+        \{Attr3, Attr4, Attr6, Attr7, Attr15, Attr19, Attr32, Attr38, Attr43, Attr44, Attr49, Attr51, Attr60, Attr62\}
+    \end{quote}
+    \item Some models required the data to be standardised (removing the mean and scaling to unit variance).
+\end{itemize}
+
+
+\subsection{Missing values imputation}
+\label{sec::pipe_missing_vals}
+To tackle the missing values problem (Section \ref{sec::missing_vals}), the following techniques were studied:
+
+\begin{itemize}
+    \item \textbf{Simple Imputer}: Missing values are imputed with mean of each column in which the missing values are located.
+    \item \textbf{MissForest Imputer}: Missing values are imputed using Random Forests in an iterative fashion \cite{Stekhoven_2011}.
+    % Initially, the imputer begins imputing missing values of the column with the largest number of missing values (\textit{candidate} column). The first step involves filling any missing values of the remaining, \textit{non-candidate}, columns with an initial guess, which is the column mean. After that, the imputer fits a random forest model with the candidate column as the outcome variable and the remaining columns as the predictors over all rows where the candidate column values are not missing. After the fit, the missing rows of the candidate column are imputed using the prediction from the fitted Random Forest. The rows of the non-candidate columns act as the input data for the fitted model. Following this, the imputer moves on to the next candidate column with the second largest number of missing values from among the non-candidate columns in the first round. The process repeats itself for each column with a missing value, possibly over multiple iterations or epochs for each column, until the stopping criterion is met. The process is continued until the stopping criterion is reached, which is governed by the "difference" between the imputed arrays over successive iterations. 
+    \item \textbf{KNN Imputer}: Missing values are imputed using k-Nearest Neighbors approach \cite{mani2003knn}.
+\end{itemize}
+
+
+\subsection{Sampling}
+\label{sec::pipe_sampling}
+To tackle the imbalance in class distributions (Section \ref{sec::imbalance}), over-sampling, under-sampling or a combination of both were performed and a comparative study was performed on the performance, along with the case where no sampling was performed.
+
+
+\begin{itemize}
+    \item \textbf{Over-sampling}: Synthetic Minority Oversampling Technique (SMOTE) \cite{Chawla_2002}
+    \item \textbf{Under-sampling}:  Random Under-Sampling of majority class (RUS)
+    \item \textbf{Over-sampling and Under-sampling}: combined over-sampling and under-sampling using SMOTE and Edited Nearest Neighbours (SMOTE-ENN)  \cite{Stekhoven_2011}.
+    
+\end{itemize}
+
+
+\subsection{Modelling}
+\label{sec::pipe_models}
+The goal of the experiment was to identify the best classification model in terms of F1-score. We took under consideration the following classification methods:
+
+\begin{itemize}
+    \item \textbf{LR}: Logistic Regression 
+    \item \textbf{LDA}: Linear Discriminant Analysis \cite{lda}
+    \item \textbf{KNN-5}: k-Nearest Neighbours (with 5 neighbours) \cite{knn}
+    \item \textbf{KNN-10}: k-Nearest Neighbours (with 10 neighbours)
+    \item \textbf{GNB}: Gaussian Naive Bayes
+    \item \textbf{DT}: Decision Tree
+    \item \textbf{SVC}: Support Vector machine Classifier \cite{svc}
+    \item \textbf{RFC}: Random Forest Classifier \cite{rf}
+    \item \textbf{XGB}: eXtreme Gradient Boosting \cite{xgboost}
+\end{itemize}
+
+\subsubsection{Voting}
+The top performing models were combined to build an ensemble model, in which a majority vote (\textit{hard} voting) would be used to predict the class labels. The aim is to balance out the individual weaknesses of each model.
+
+Based on the results, we chose \textbf{LR}, \textbf{DT}, \textbf{RFC}, \textbf{XGB} with individual weights as $1$ and \textbf{KNN-10}, \textbf{SVC} with weights $0.5$ each in the voting to build a "Voting" Classifier.
+
+
+\section{Experiment}
+
+\subsection{Settings}
+
+\begin{itemize}
+    \item The models were implemented\footnote{Code available at \vargithubrepo} in Python using Scikit-learn \cite{scikit-learn}. MissingPy and Imbalanced-learn \cite{imb-learn} were used for imputing missing values and balancing classes in the dataset. xgboost package \cite{xgboost} was used to train XGBoost model (to leverage concurrency).  Matplotlib \cite{matplotlib} was used to plot graphs and Pandas \cite{pandas1,pandas2} was used for data analysis.
+    
+    \item Pre-processing as mentioned in Section \ref{sec::pipe_preprocessing} were performed.
+    
+    \item The \texttt{random\_state} was set to \varrandomstate wherever possible.
+    
+    \item The dataset was split into train-test sets using \texttt{ sklearn.model\_selection.train\_ test\_split()} with \texttt{test\_split} set to \varsplit.
+    
+    \item The experiment was conducted for each of the following 12 combinations of missing value imputation and sampling techniques (as mentioned in Section \ref{sec::methodology}) for each year:
+        \begin{enumerate}
+            \item \textbf{Simple} imputation with \textbf{No} sampling
+        \item \textbf{Simple} imputation with \textbf{SMOTE} sampling
+        \item \textbf{Simple} imputation with \textbf{RUS} sampling
+        \item \textbf{Simple} imputation with \textbf{SMOTE-ENN} sampling
+        \item \textbf{MissForest} imputation with \textbf{No} sampling
+        \item \textbf{MissForest} imputation with \textbf{SMOTE} sampling
+        \item \textbf{MissForest} imputation with \textbf{RUS} sampling
+        \item \textbf{MissForest} imputation with \textbf{SMOTE-ENN} sampling
+        \item \textbf{KNN} imputation with \textbf{No} sampling
+        \item \textbf{KNN} imputation with \textbf{SMOTE} sampling
+        \item \textbf{KNN} imputation with \textbf{RUS} sampling
+        \item \textbf{KNN} imputation with \textbf{SMOTE-ENN} sampling
+        \end{enumerate}
+        
+    \item The sampling was performed only on the train set. However, imputation had to be carried out in both train and test sets.
+    
+    \item The desired ratio of the number of samples in the minority class over the number of samples in the majority class after resampling is set to \vasamplingstrategy.
+    
+    \item Each model was tuned by performing exhaustive search over list of parameter values and fitted with \varcrossval-fold cross validation with \varcrossvalmetric as validation metric to obtained the best model. The list of parameters were chosen based on heuristics, considering the computational costs.
+    % The list of parameters used and the best parameters obtained are enclosed in Appendix \ref{app::params}.
+    
+    %\item 
+
+
+\end{itemize}
+%%%%%%%%%%%% complete this
+\subsection{Results}
+\label{sec:results}
+We use the following notations to define the performance metrics used in this report:
+\begin{itemize}
+    \item \textbf{TP} (True Positive): Model predicts Positive and it is actually Positive.
+    \item \textbf{FP} (False Positive): Model predicts Positive but it is actually Negative.
+    \item \textbf{FN} (False Negative): Model predicts Negative but it is actually Positive.
+    \item \textbf{TN} (True Negative): Model predicts Negative and it is actually Negative.
+\end{itemize}
+
+
+\noindent Now, we define the performance metrics of our interest.
+\begin{table}[htpb]
+\centering
+\begin{tabular}{lcl}
+Accuracy \textit{(Acc)} & = & $\frac{TP + TN}{TP + FP + FN + TN}$ \\
+~ & ~ & ~ \\
+Precision \textit{(Prec)} & = & $\frac{TP}{TP + FP}$ \\
+~ & ~ & ~ \\
+Recall \textit{(Rec)} & = & $\frac{TP}{TP + FN}$ \\
+~ & ~ & ~ \\
+F1-Score \textit{(F1)} & = & $\frac{2 \times \text{Precision} \times
+\text{Recall}}{\text{Precision}+\text{Recall}}$ \\
+\end{tabular}
+\end{table}
+
+\input{partials/tab__best_results}
+We list the model and the setting which gave the best results for each year in Table \ref{tab::best_results} and enclose the complete results obtained for each settings for each year in Table \ref{tab::results}.
+
+
+\subsection{Analysis}
+From the results in Table \ref{tab::best_results} and Table \ref{tab::results}, the following observations can be drawn:
+\begin{itemize}
+    \item XGBoost gave the best results, in terms of F1-score.
+    \item The performance of the models had improved when over-sampling (specifically SMOTE) was used, in general.
+    \item A surprising result was that Simple Imputation outperformed MissForest and KNN Imputation techniques, even though the latter methods are relatively more sophisticated and computationally expensive. 
+    \item Both over-sampling and under-sampling (including combination of both) improved the recall, while the precision dropped. This can be reasoned by the fact that the sampling techniques increase the percentage of examples positive labels (\textit{minority} class) in the dataset. 
+    
+    
+\end{itemize}
+
+
+\section{Other Approaches}
+Since many attributes had high correlation values with each other, we were motivated to use Dimensionality Reduction for the data-set, Principal Component Analysis (PCA) \cite{PCA:12} in particular. We reduced the dimension of the dataset to 20 and experimented with different sampling techniques and Simple Imputation.
+%Table \ref{tab::pca_results} contains the results of the experiment. 
+However, we observed that the results did not improve significantly with PCA (Table \ref{tab::pca_results}).
+
+
+
+\section{Conclusion}
+In this project, we surveyed various missing value imputation and sampling techniques and conducted a comparative study for bankruptcy prediction task. The performance of the models had improved significantly with the application of SMOTE (Table  \ref{tab::best_results} and Table \ref{tab::results}). \newcite{ren_2020} conducted the experiment for Year 5 without sampling and obtained a recall of 56\%. In our case, the best model for Year 5 had a recall of 66\% (and a F1-score of 64\%). Moreover, the accuracy values of the best models obtained were over 95\% which were similar to accuracy values obtained by \newcite{zikeba2016ensemble}. However, in our case, the model had learnt to predict companies that actually go "\textit{bankrupt}" (as the F1-scores were above 60\% on average); however no such conclusion can be drawn from the models proposed by \newcite{zikeba2016ensemble} as the F1-scores were not reported and owing to the high class imbalance, a model with high bias towards the class "\textit{not bankrupt}" could also have similar accuracy values (as discussed in Section \ref{sec::motivation}).
+
+
+% en and Weiss (2020) trained some ML models for bankruptcy, including the XGBoost model by Zieba et al. (2016), and observed that the best recall value achieved was approx. 58%​
+%They argued "the biggest issue with the results is that only 56% of the bankrupted companies are identified but given the relatively severe level of class imbalance (1:13.5), the results are non
+
+
+%%% \section*{Acknowledgments}
+
+%%% The acknowledgments should go immediately before the references. Do not number the acknowledgments section.
+%% Do not include this section when submitting your paper for review.
+
+
+\bibliography{bibs/main,bibs/py,bibs/models}
+\bibliographystyle{acl_natbib}
+
+\appendix
+
+% \section{Complete Results}
+\input{partials/tab__results}
+
+\input{partials/tab__pca_results}
+
+\begin{figure*}[htbp]
+\includegraphics[width=2\columnwidth]{correlation_crop.png}
+\caption{\label{fig::correlation} Correlation matrix for the dataset}
+\end{figure*}
+
+% \section{List of parameters for fine-tuning models}
+% \label{app::params}
+
+
+\end{document}
